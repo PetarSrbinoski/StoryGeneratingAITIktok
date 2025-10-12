@@ -93,8 +93,6 @@ Options:
 - -StopOllama:    Stops all Ollama processes when finished
 - -ForceGPU:      Force GPU offload for Ollama (default: on). Disable with -ForceGPU:$false
 
-Examples:
-powershell
 ### Faster run with smaller model
 powershell -ExecutionPolicy Bypass -File C:\creator\make-video.ps1 -Model "llama3.1:8b"
 
