@@ -1,0 +1,2 @@
+﻿FROM llama3.2
+PARAMETER num_gpu 999

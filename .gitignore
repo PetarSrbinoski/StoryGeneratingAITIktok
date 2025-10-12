@@ -1,0 +1,78 @@
+# ==============================
+# PowerShell Horror Video Project
+# ==============================
+
+# Ignore all video and audio outputs
+/out/*.wav
+/out/*.mp3
+/out/*.mp4
+/out/videos/*.mp4
+
+# Ignore temporary & log files
+/out/*.log
+/out/*.tmp
+/out/*.bak
+/temp/
+*.log
+*.tmp
+*.bak
+*.err
+*.out
+
+# Ignore AI model raw outputs
+/out/ollama_raw*.txt
+/out/story_*.json
+/out/story_*.txt
+/out/captions-*.srt
+
+# Ignore Piper binaries and large voice files (keep structure)
+bin/piper/**
+voices/**
+
+# But keep voice folder structure (so subfolders exist)
+!voices/
+!voices/**/
+!bin/
+!bin/piper/
+!out/
+!out/videos/
+
+# Ignore generated PowerShell cache
+*.ps1~
+*.ps1.tmp
+
+# Ignore Windows thumbnail and system files
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# Ignore Python environment remnants (if created accidentally)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+env/
+venv/
+
+# Ignore VS Code / JetBrains / IDE settings
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Ignore temporary FFmpeg fragments
+*.ffcat
+*.ffindex
+*.ffmeta
+
+# ==============================
+# Keep main scripts & docs
+# ==============================
+!make-video.ps1
+!README.md
+!requirements.txt
+!.gitignore
