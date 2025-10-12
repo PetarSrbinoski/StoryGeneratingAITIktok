@@ -3,9 +3,9 @@ param(
   [string]$Model      = "mixtral:8x7b",
   [string]$Voice      = "C:\creator\voices\en_US-ryan-high\en_US-ryan-high.onnx",
   [string]$Prompt     = $null,
-  [switch]$ForceGPU = $true,     # force GPU offload when starting Ollama
-  [switch]$ShowGPU  = $false,    # open a live nvidia-smi window during generation
-  [switch]$StopOllama = $false   # stop all ollama processes after finishing
+  [switch]$ForceGPU = $true,
+  [switch]$ShowGPU  = $false,
+  [switch]$StopOllama = $false
 )
 
 $ErrorActionPreference = 'Stop'
@@ -16,7 +16,15 @@ $root   = "C:\creator"
 $outDir = Join-Path $root "out"
 $temp   = Join-Path $root "temp"
 $piper  = "C:\creator\bin\piper\piper.exe"
+
+# Create main folders
 New-Item -Force -ItemType Directory -Path $outDir,$temp | Out-Null
+
+# Dedicated folder for final videos
+$videosDir = Join-Path $outDir "videos"
+if (-not (Test-Path $videosDir)) {
+  New-Item -Force -ItemType Directory -Path $videosDir | Out-Null
+}
 
 function Get-JsonValue([object]$obj, [string]$name, [string]$fallback) {
   if ($null -eq $obj) { return $fallback }
@@ -42,7 +50,6 @@ function Get-NextIndex([string]$dir) {
 function Start-OllamaBackground {
   param([switch]$ForceGPU)
 
-  # Port check
   $portOk = $false
   try { $portOk = (Test-NetConnection -ComputerName localhost -Port 11434 -WarningAction SilentlyContinue).TcpTestSucceeded } catch {}
 
@@ -51,7 +58,6 @@ function Start-OllamaBackground {
     return
   }
 
-  # Prepare env for full GPU offload if requested
   $envForProc = @{}
   if ($ForceGPU.IsPresent) {
     $env:OLLAMA_NUM_GPU = "999"
@@ -82,10 +88,8 @@ function Stop-OllamaAll {
   }
 }
 
-# Start Ollama (with GPU offload if requested)
 Start-OllamaBackground -ForceGPU:$ForceGPU
 
-# Optional: open a live GPU monitor (closes later)
 $gpuMonProc = $null
 if ($ShowGPU) {
   try {
@@ -96,28 +100,10 @@ if ($ShowGPU) {
   }
 }
 
-# ===== Prompt (horror, anthology, 180–250 words, JSON only) =====
 if ([string]::IsNullOrWhiteSpace($Prompt)) {
   $prompt = @"
-SYSTEM: You are an award-winning mystery and horror storyteller with mastery of suspense, psychology, and cinematic pacing. You write like a cross between Gillian Flynn, Shirley Jackson, and Stephen King — blending human realism, dread, and emotional depth.
+Write a really good and engaging short horror/mystery story in first person that will keep the reader engaged. Around 300-400 words. Make it tense and make the reader feel uneasy. For the ending either make it open to interpretation or finish it really scary and strong.
 
-TASK: Write ONE short story (400–700 words) in first-person or close third-person. The story must feel cinematic, tense, and satisfying — not a vignette or teaser.
-
-REQUIREMENTS:
-- Begin with a HOOK — an unsettling image, action, or sound that immediately provokes curiosity.
-- Build mystery gradually: show unease through details, behavior, atmosphere, and dialogue.
-- Keep readers uncertain until the final 1–2 paragraphs, where the truth or twist lands hard.
-- Make characters feel real (motives, fears, contradictions). Avoid clichés or “perfect victims.”
-- Use sensory language: describe textures, sounds, temperature, and space to pull readers in.
-- Keep paragraphs short (3–6 lines) and rhythm cinematic — alternating between slow suspense and sharp revelation.
-- End with a *chilling resolution* or an *emotional shock* — not just “it was a dream” or “they were dead all along.”
-- NO gore for shock value; rely on psychological tension, atmosphere, and human darkness.
-
-STYLE:
-- Tone: dark, intelligent, immersive, emotional.
-- Narration: internal monologue + vivid setting.
-- Language: precise, natural, and cinematic.
-- Avoid over-explaining. Let readers *infer* what’s wrong.
 OUTPUT FORMAT:
 Return ONLY valid JSON in this exact structure:
 {
@@ -125,11 +111,9 @@ Return ONLY valid JSON in this exact structure:
   "story": "Full, coherent story text (180–250 words, following all style rules)",
   "hashtags": "#storytime #writing #shortstory #cinematic #fyp"
 }
-
 "@
 } else {
   $prompt = $Prompt + @"
-
 SYSTEM: Reply with JSON only. One coherent cinematic horror story with strong hook and satisfying/twist ending.
 TARGET: 180-250 words (~2 minutes). No emojis/hashtags in the story text.
 Return JSON:
@@ -141,7 +125,6 @@ Return JSON:
 "@
 }
 
-# ===== Ollama helper =====
 function Invoke-Ollama([hashtable]$body) {
   $json  = ($body | ConvertTo-Json -Depth 10)
   $bytes = $UTF8.GetBytes($json)
@@ -149,13 +132,11 @@ function Invoke-Ollama([hashtable]$body) {
   return $resp.Content
 }
 
-# ===== Numbering + debug logs =====
-$idx = Get-NextIndex $outDir
+$idx = Get-NextIndex $videosDir
 $tag = ('{0:000}' -f $idx)
 $raw1 = Join-Path $outDir ("ollama_raw1_{0}.txt" -f $tag)
 $raw2 = Join-Path $outDir ("ollama_raw2_{0}.txt" -f $tag)
 
-# ===== Generate story =====
 $jsonText = $null
 $fallbackText = $null
 try {
@@ -200,12 +181,11 @@ $title    = Get-JsonValue $storyObj 'title'    'Untitled'
 $story    = Get-JsonValue $storyObj 'story'    'I am speaking.'
 $hashtags = Get-JsonValue $storyObj 'hashtags' '#storytime #writing #shortstory #cinematic #fyp'
 
-# ===== Paths =====
 $storyTxt  = Join-Path $outDir ("story_{0}.txt"    -f $tag)
 $storyJson = Join-Path $outDir ("story_{0}.json"   -f $tag)
 $capsSrt   = Join-Path $outDir ("captions-{0}.srt" -f $tag)
 $voiceWav  = Join-Path $outDir ("voice-{0}.wav"    -f $tag)
-$finalMp4  = Join-Path $outDir ("final-{0}.mp4"    -f $tag)
+$finalMp4  = Join-Path $videosDir ("final-{0}.mp4" -f $tag)
 
 (@{title=$title; story=$story; hashtags=$hashtags} | ConvertTo-Json -Depth 6) | Set-Content -Encoding UTF8 -Path $storyJson
 $story | Set-Content -Encoding UTF8 -Path $storyTxt
@@ -216,15 +196,12 @@ Write-Host "Hashtags: $hashtags"
 Write-Host "Voice: $Voice"
 Write-Host "Model: $Model  (GPU forcing: $($ForceGPU.IsPresent))"
 
-# ===== Piper TTS (natural speed; slight pause between sentences) =====
 if (-not (Test-Path $piper)) { throw "piper.exe not found at $piper" }
-# Normalize combining marks to reduce warnings
 $clean = [regex]::Replace((Get-Content $storyTxt -Raw), "\p{M}", "")
 $clean | Set-Content -Encoding UTF8 -Path $storyTxt
 Get-Content $storyTxt -Raw | & $piper -m $Voice --length_scale 1.05 --sentence_silence 0.45 -f $voiceWav
 if (-not (Test-Path $voiceWav)) { throw "Piper did not produce $voiceWav" }
 
-# ===== Optional post-process (subtle dark color; keeps duration) =====
 $procWav = Join-Path $outDir ("voice-processed-{0}.wav" -f $tag)
 Remove-Item -Force -ErrorAction SilentlyContinue $procWav
 
@@ -246,7 +223,6 @@ if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
   }
 }
 
-# ===== Build captions (3-word, audio-paced, punctuation pauses) =====
 function Get-AudioDurationSeconds([string]$path) {
   $d = & ffprobe -v error -show_entries format=duration -of default=nokey=1:noprint_wrappers=1 -- "$path" 2>$null
   [double]::Parse($d, [Globalization.CultureInfo]::InvariantCulture)
@@ -300,15 +276,12 @@ for ($i=0; $i -lt $chunks.Count; $i++) {
 }
 $srt | Set-Content -Encoding UTF8 -Path $capsSrt
 
-# ===== FFmpeg render (GPU NVENC), lower-center Comic Sans, small =====
 if (-not (Test-Path $Background)) { throw "Missing background video: $Background" }
 Push-Location $outDir
 
 $subsUnix = ($capsSrt -replace '\\','/')
 $subsEsc  = ($subsUnix -replace '^([A-Za-z]):', '$1\:/')
-
-# Centered lower middle (Alignment=2) and slightly smaller text
-$style = "Alignment=2,Fontname=Comic Sans MS,Fontsize=22,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=1,Outline=1,Shadow=1,MarginV=70"
+$style = "Alignment=2,Fontname=Comic Sans MS,Fontsize=22,PrimaryColour=&H00FFFFFF,OutlineColour=&H00008000,BorderStyle=1,Outline=1,Shadow=1,MarginV=60"
 $vf = "scale='if(gte(a,9/16),-2,1080)':'if(gte(a,9/16),1920,-2)',crop=1080:1920,setsar=1,subtitles=filename='$subsEsc':force_style='$style'"
 
 ffmpeg -y `
@@ -327,10 +300,8 @@ Write-Host "`nDONE! => $finalMp4"
 Write-Host "Title: $title"
 Write-Host "Hashtags: $hashtags"
 
-# Close GPU monitor if we opened it
 if ($gpuMonProc -ne $null) {
   try { $gpuMonProc.CloseMainWindow() | Out-Null; Start-Sleep 1; if (!$gpuMonProc.HasExited) { $gpuMonProc.Kill() } } catch {}
 }
 
-# Optional: stop Ollama after finishing
 if ($StopOllama) { Stop-OllamaAll }
