@@ -86,12 +86,12 @@ powershell
 powershell -ExecutionPolicy Bypass -File C:\creator\make-video.ps1
 
 Options:
-- Model         Choose Ollama model (e.g., "llama3.1:8b" or "mixtral:8x7b")
-- Voice         Path to Piper voice .onnx
-- Prompt        Custom seed/theme text appended to the internal prompt
-- ShowGPU       Opens a live nvidia-smi window during generation
-- StopOllama    Stops all Ollama processes when finished
-- ForceGPU      Force GPU offload for Ollama (default: on). Disable with -ForceGPU:$false
+- -Model:         Choose Ollama model (e.g., "llama3.1:8b" or "mixtral:8x7b")
+- -Voice:         Path to Piper voice .onnx
+- -Prompt:        Custom seed/theme text appended to the internal prompt
+- -ShowGPU:       Opens a live nvidia-smi window during generation
+- -StopOllama:    Stops all Ollama processes when finished
+- -ForceGPU:      Force GPU offload for Ollama (default: on). Disable with -ForceGPU:$false
 
 Examples:
 powershell
