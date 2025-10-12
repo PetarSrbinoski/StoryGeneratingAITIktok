@@ -95,18 +95,15 @@ Options:
 
 Examples:
 powershell
-# Faster run with smaller model
+### Faster run with smaller model
 powershell -ExecutionPolicy Bypass -File C:\creator\make-video.ps1 -Model "llama3.1:8b"
 
-# Use a different voice
+### Use a different voice
 powershell -ExecutionPolicy Bypass -File C:\creator\make-video.ps1 -Voice "C:\creator\voices\en_US-amy-high\en_US-amy-high.onnx"
 
-# Show GPU monitor and stop Ollama when done
-powershell -ExecutionPolicy Bypass -File C:\creator\make-video.ps1 -ShowGPU -StopOllama
-
-# Provide a custom theme
+### Provide a custom theme
 powershell
-powershell -ExecutionPolicy Bypass -File C:\creator\make-video.ps1 -Prompt "Write a foggy mountain cabin horror with an unreliable narrator."
+powershell -ExecutionPolicy Bypass -File C:\creator\make-video.ps1 -Prompt "put your prompt here."
 
 Output files:
 - Final video: C:\creator\out\videos\final-XXX.mp4
@@ -127,41 +124,6 @@ You should see `ollama` and `ffmpeg` listed during generation/render.
 
 ---
 
-## Start/Stop Ollama Manually
-
-Start (foreground):
-ollama serve
-
-Start (hidden):
-powershell
-Start-Process -WindowStyle Hidden -FilePath "ollama" -ArgumentList "serve"
-
-Stop all:
-powershell
-Stop-Process -Name ollama -Force
-
----
-
-## Piper Test
-
-powershell
-'Hello from Piper' | & 'C:\creator\bin\piper\piper.exe' -m 'C:\creator\voices\en_US-ryan-high\en_US-ryan-high.onnx' -f 'C:\creator\out\test.wav'
-
-You should get:
-C:\creator\out\test.wav
-
----
-
-## Troubleshooting
-
-- FFmpeg not found: open a new PowerShell window after adding to PATH; run `ffmpeg -version`.
-- Piper did not produce audio: check the `-Voice` path and that both `.onnx` and `.onnx.json` exist.
-- JSON errors: see `out\ollama_raw*.txt`. The script falls back to extracting JSON from plain text automatically.
-- Video length mismatch: the renderer uses `-shortest` to end with the audio. Adjust story length or TTS speed if needed.
-- Subtitle style/position: edit the `force_style` string in the script (font, size, alignment, margins).
-
----
-
 ## License Notes
 
 This setup is for local/personal use. Dependencies retain their original licenses:
@@ -169,7 +131,7 @@ This setup is for local/personal use. Dependencies retain their original license
 - Piper (MIT)
 - FFmpeg (LGPL/GPL depending on build)
 
-
+---
 ## 🧑‍💻 Author
 
 **Petar Srbinoski**  
