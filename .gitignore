@@ -7,7 +7,7 @@
 /out/*.mp3
 /out/*.mp4
 /out/videos/*.mp4
-
+/in/*
 /piper/piper/*
 
 # Ignore temporary & log files
@@ -39,9 +39,6 @@ voices/**
 !out/
 !out/videos/
 
-# Ignore generated PowerShell cache
-*.ps1~
-*.ps1.tmp
 
 # Ignore Windows thumbnail and system files
 Thumbs.db
@@ -71,10 +68,3 @@ venv/
 *.ffindex
 *.ffmeta
 
-# ==============================
-# Keep main scripts & docs
-# ==============================
-!make-video.ps1
-!README.md
-!requirements.txt
-!.gitignore
