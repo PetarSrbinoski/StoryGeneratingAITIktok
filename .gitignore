@@ -8,6 +8,8 @@
 /out/*.mp4
 /out/videos/*.mp4
 
+/piper/piper/*
+
 # Ignore temporary & log files
 /out/*.log
 /out/*.tmp
