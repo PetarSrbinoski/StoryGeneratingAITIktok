@@ -1,217 +1,88 @@
-# AI Story Video Generator (TikTok-style)
+# AI Story Video Generator (Windows)
 
-This project generates vertical TikTok-style videos from AI-generated horror stories.
-It uses:
-- Ollama for text generation (local LLM)
-- Piper for text-to-speech (local TTS)
-- FFmpeg for audio/video processing
-
-Everything runs locally on Windows.
+Generates vertical TikTok-style videos from AI-written stories.
+Runs fully locally using Ollama, Piper, and FFmpeg.
 
 ---
 
 ## Requirements
 
-### Operating System
 - Windows 10 / 11
+- Ollama (installed and running)
+- FFmpeg (available in PATH)
+- Piper TTS with at least one .onnx voice model
 
-### Required Software
-
-1) Ollama
-   - Download: https://ollama.com
-   - Must be installed and available in PATH
-   - Tested with Ollama v0.14.2+
-
-2) FFmpeg
-   - Must be available in PATH
-   - NVENC is supported and used automatically if available
-   - Tested with ffmpeg 8.0 (gyan.dev build)
-
-3) Piper (Text-to-Speech)
-   - Download from: https://github.com/rhasspy/piper
-   - Place `piper.exe` anywhere (example: C:\creator\bin\piper\piper.exe)
-   - Download at least one `.onnx` voice model
+Tested model:
+- qwen2.5:7b-instruct
 
 ---
 
-## Verified Working Setup (Example)
-
-This project was tested with:
-
-- Ollama model: qwen2.5:7b-instruct
-- Ollama path:
-  C:\Users\petar\AppData\Local\Programs\Ollama\ollama.exe
-
-- FFmpeg path:
-  C:\Users\petar\AppData\Local\Microsoft\WinGet\Links\ffmpeg.exe
-
-- Piper path:
-  C:\creator\bin\piper\piper.exe
-
----
-
-## Folder Structure
-
-Example structure (recommended):
+## Folder Structure (example)
 
 C:\creator
-│
 ├─ make-video.ps1
-│
-├─ in
-│   └─ background.mp4
-│
-├─ out
-│   └─ videos
-│
+├─ in\background.mp4
+├─ out\videos
 ├─ temp
-│
-└─ bin
-    └─ piper
-        ├─ piper.exe
-        ├─ voice.onnx
-        └─ voice.onnx.json
+└─ bin\piper\piper.exe + voice.onnx
 
 ---
 
-## Before Running (One-Time Setup)
+## One-Time Setup
 
-### 1) Verify tools in CMD
-
-Open Command Prompt (CMD) and run:
-
-where ollama
-ollama --version
-ollama list
-
-where ffmpeg
-ffmpeg -version
-
-where piper
-piper --help
-
-All commands must work without errors.
-
----
-
-### 2) Make sure the Ollama model exists
-
-ollama list
-
-You should see:
-
-qwen2.5:7b-instruct
-
-If not:
-
-ollama pull qwen2.5:7b-instruct
-
----
-
-### 3) Start Ollama server
-
-In CMD:
-
+Start Ollama:
 ollama serve
 
-Leave this window open.
-(If Ollama is already running, this step can be skipped.)
-
-Optional test:
-
-curl http://localhost:11434/api/tags
+Verify model exists:
+ollama list
 
 ---
 
-## Running the Generator
-
-### Basic Run (uses defaults)
+## Run (Basic)
 
 cd /d C:\creator
-powershell -ExecutionPolicy Bypass -File .\make-video.ps1 -Model "qwen2.5:7b-instruct"
+powershell -ExecutionPolicy Bypass -File .\make-video.ps1 `
+  -Model "qwen2.5:7b-instruct"
 
 ---
 
-### Run with GPU monitoring enabled
+## Run with Custom Model
 
 cd /d C:\creator
-powershell -ExecutionPolicy Bypass -File .\make-video.ps1 ^
-  -Model "qwen2.5:7b-instruct" ^
-  -ShowGPU ^
-  -ForceGPU
+powershell -ExecutionPolicy Bypass -File .\make-video.ps1 `
+  -Model "phi3:mini"
 
 ---
 
-### Run with custom background and voice
+## Run with Custom Prompt (Story Theme)
 
 cd /d C:\creator
-powershell -ExecutionPolicy Bypass -File .\make-video.ps1 ^
-  -Model "qwen2.5:7b-instruct" ^
-  -Background "C:\creator\in\background.mp4" ^
+powershell -ExecutionPolicy Bypass -File .\make-video.ps1 `
+  -Model "qwen2.5:7b-instruct" `
+  -Prompt "A small town where everyone wakes up at 3:17 AM every night"
+
+---
+
+## Run with Custom Prompt + Background + Voice
+
+cd /d C:\creator
+powershell -ExecutionPolicy Bypass -File .\make-video.ps1 `
+  -Model "qwen2.5:7b-instruct" `
+  -Prompt "An abandoned hospital with a locked basement floor" `
+  -Background "C:\creator\in\background.mp4" `
   -Voice "C:\creator\bin\piper\voice.onnx"
 
 ---
 
-### Run with a custom story theme
+## Optional Flags
 
-cd /d C:\creator
-powershell -ExecutionPolicy Bypass -File .\make-video.ps1 ^
-  -Model "qwen2.5:7b-instruct" ^
-  -Prompt "A haunted village where nobody can sleep"
+-ShowGPU        Show GPU usage (nvidia-smi)
+-ForceGPU       Force Ollama GPU offload
+-StopOllama     Stop Ollama after finishing
 
 ---
 
 ## Output
 
-Generated files are saved to:
-
-C:\creator\out\videos
-
-Each run produces:
-- final-XXX.mp4 (ready to upload)
-- Intermediate files in temp\ for debugging
-
----
-
-## Notes
-
-- The script automatically:
-  - Generates a horror story via Ollama
-  - Converts text to speech via Piper
-  - Generates subtitles
-  - Renders a 1080x1920 vertical video
-- If JSON output from the model is malformed, the script falls back safely.
-- NVENC is used automatically if supported by your GPU.
-- All processing is fully local (no cloud APIs).
-
----
-
-## Troubleshooting
-
-### Script blocked by execution policy
-
-Run PowerShell as shown with:
-
--ExecutionPolicy Bypass
-
-### Ollama not responding
-
-Check:
-
-curl http://localhost:11434/api/tags
-
-If it fails, restart:
-
-ollama serve
-
-### Piper fails
-
-Verify:
-- .onnx model path is correct
-- .json config exists next to the model
-
----
-
-## License
-
-Use freely. Modify as needed.
+Final videos are saved to:
+C:\creator\out\videos\final-XXX.mp4
