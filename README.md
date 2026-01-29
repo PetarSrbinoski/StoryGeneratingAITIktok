@@ -55,22 +55,18 @@ powershell -ExecutionPolicy Bypass -File .\make-video.ps1 `
 ---
 
 ## Run with Custom Prompt (Story Theme)
-
-cd /d C:\creator
-powershell -ExecutionPolicy Bypass -File .\make-video.ps1 `
+   powershell -ExecutionPolicy Bypass -File .\make-video.ps1 `
   -Model "qwen2.5:7b-instruct" `
   -Prompt "A small town where everyone wakes up at 3:17 AM every night"
 
 ---
 
 ## Run with Custom Prompt + Background + Voice
-
-cd /d C:\creator
-powershell -ExecutionPolicy Bypass -File .\make-video.ps1 `
+```powershell -ExecutionPolicy Bypass -File .\make-video.ps1 `
   -Model "qwen2.5:7b-instruct" `
   -Prompt "An abandoned hospital with a locked basement floor" `
   -Background "C:\creator\in\background.mp4" `
-  -Voice "C:\creator\bin\piper\voice.onnx"
+  -Voice "C:\creator\bin\piper\voice.onnx"```
 
 ---
 
