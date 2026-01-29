@@ -1,137 +1,217 @@
-# Local AI Horror Video Generator (Windows, PowerShell)
+# AI Story Video Generator (TikTok-style)
 
-Generate short vertical videos entirely offline:
-- AI-written stories via **Ollama**
-- Narration via **Piper TTS**
-- Subtitles and render via **FFmpeg**
-- GPU acceleration (NVENC and Ollama GPU offload)
+            This project generates vertical TikTok-style videos from AI-generated horror stories.
+            It uses:
+            - Ollama for text generation (local LLM)
+            - Piper for text-to-speech (local TTS)
+            - FFmpeg for audio/video processing
 
-Final videos are saved to `C:\creator\out\videos`.
+            Everything runs locally on Windows.
 
----
+            ---
 
-## Folder Structure
+            ## Requirements
 
-C:\creator\
-├─ make-video.ps1
-├─ in\
-│  └─ background.mp4
-├─ bin\
-│  └─ piper\piper.exe
-├─ voices\
-│  └─ en_US-ryan-high\
-│     ├─ en_US-ryan-high.onnx
-│     └─ en_US-ryan-high.onnx.json
-└─ out\
-   ├─ videos\                 # final-XXX.mp4
-   ├─ story_XXX.txt/.json     # generated story
-   ├─ captions-XXX.srt        # subtitles
-   ├─ voice-XXX.wav           # narration
-   └─ ollama_raw*.txt         # raw model responses
+            ### Operating System
+            - Windows 10 / 11
 
-Create missing folders:
-powershell
-New-Item -Force -ItemType Directory -Path C:\creator\in,C:\creator\bin\piper,C:\creator\voices,C:\creator\out\videos | Out-Null
+            ### Required Software
 
----
+            1) Ollama
+               - Download: https://ollama.com
+               - Must be installed and available in PATH
+               - Tested with Ollama v0.14.2+
 
-## Requirements
+            2) FFmpeg
+               - Must be available in PATH
+               - NVENC is supported and used automatically if available
+               - Tested with ffmpeg 8.0 (gyan.dev build)
 
-1) Windows 10/11 with PowerShell 5.1+
-2) NVIDIA GPU and drivers (recommended)
-3) FFmpeg in PATH
-   - Download a static build (e.g., Gyan.dev), unzip, add its `bin` to PATH
-4) Ollama
-   - Install:
-     winget install Ollama.Ollama
-5) Piper (prebuilt Windows binary)
-   - Download `piper_windows_amd64.zip` from:
-     https://github.com/rhasspy/piper/releases
-   - Extract to:
-     C:\creator\bin\piper
-6) Piper voice model (example: Ryan, US male)
-   - Place in:
-     C:\creator\voices\en_US-ryan-high\
-     Files required:
-       en_US-ryan-high.onnx
-       en_US-ryan-high.onnx.json
+            3) Piper (Text-to-Speech)
+               - Download from: https://github.com/rhasspy/piper
+               - Place `piper.exe` anywhere (example: C:\creator\bin\piper\piper.exe)
+               - Download at least one `.onnx` voice model
 
----
+            ---
 
-## Pull Models (Ollama)
+            ## Verified Working Setup (Example)
 
-Recommended:
-- llama3.1:8b  (faster)
-- mixtral:8x7b (default in script, stronger)
+            This project was tested with:
 
-powershell
-ollama pull llama3.1:8b
-ollama pull mixtral:8x7b
+            - Ollama model: qwen2.5:7b-instruct
+            - Ollama path:
+              C:\Users\petar\AppData\Local\Programs\Ollama\ollama.exe
 
----
+            - FFmpeg path:
+              C:\Users\petar\AppData\Local\Microsoft\WinGet\Links\ffmpeg.exe
 
-## Background Video
+            - Piper path:
+              C:\creator\bin\piper\piper.exe
 
-Place your background clip at:
-C:\creator\in\background.mp4
+            ---
 
-Any 16:9 or 9:16 source works. The script scales/crops to 1080x1920.
+            ## Folder Structure
 
----
+            Example structure (recommended):
 
-## Usage
+            C:\creator
+            │
+            ├─ make-video.ps1
+            │
+            ├─ in
+            │   └─ background.mp4
+            │
+            ├─ out
+            │   └─ videos
+            │
+            ├─ temp
+            │
+            └─ bin
+                └─ piper
+                    ├─ piper.exe
+                    ├─ voice.onnx
+                    └─ voice.onnx.json
 
-Run (default model: mixtral:8x7b):
-powershell
-powershell -ExecutionPolicy Bypass -File C:\creator\make-video.ps1
+            ---
 
-Options:
-- -Model:         Choose Ollama model (e.g., "llama3.1:8b" or "mixtral:8x7b")
-- -Voice:         Path to Piper voice .onnx
-- -Prompt:        Custom seed/theme text appended to the internal prompt
-- -ShowGPU:       Opens a live nvidia-smi window during generation
-- -StopOllama:    Stops all Ollama processes when finished
-- -ForceGPU:      Force GPU offload for Ollama (default: on). Disable with -ForceGPU:$false
+            ## Before Running (One-Time Setup)
 
-### Faster run with smaller model
-powershell -ExecutionPolicy Bypass -File C:\creator\make-video.ps1 -Model "llama3.1:8b"
+            ### 1) Verify tools in CMD
 
-### Use a different voice
-powershell -ExecutionPolicy Bypass -File C:\creator\make-video.ps1 -Voice "C:\creator\voices\en_US-amy-high\en_US-amy-high.onnx"
+            Open Command Prompt (CMD) and run:
 
-### Provide a custom theme
-powershell
-powershell -ExecutionPolicy Bypass -File C:\creator\make-video.ps1 -Prompt "put your prompt here."
+            where ollama
+            ollama --version
+            ollama list
 
-Output files:
-- Final video: C:\creator\out\videos\final-XXX.mp4
-- Story/Captions/Audio: C:\creator\out\
+            where ffmpeg
+            ffmpeg -version
 
----
+            where piper
+            piper --help
 
-## GPU Acceleration
+            All commands must work without errors.
 
-The script starts Ollama (if needed) and, by default, sets:
-OLLAMA_NUM_GPU=999
+            ---
 
-Verify GPU usage:
-powershell
-nvidia-smi
+            ### 2) Make sure the Ollama model exists
 
-You should see `ollama` and `ffmpeg` listed during generation/render.
+            ollama list
 
----
+            You should see:
 
-## License Notes
+            qwen2.5:7b-instruct
 
-This setup is for local/personal use. Dependencies retain their original licenses:
-- Ollama (Apache 2.0)
-- Piper (MIT)
-- FFmpeg (LGPL/GPL depending on build)
+            If not:
 
----
-## 🧑‍💻 Author
+            ollama pull qwen2.5:7b-instruct
 
-**Petar Srbinoski**  
-Faculty of Computer Science and Engineering (FINKI), UKIM  
-petar.srbinoski@gmail.com
+            ---
+
+            ### 3) Start Ollama server
+
+            In CMD:
+
+            ollama serve
+
+            Leave this window open.
+            (If Ollama is already running, this step can be skipped.)
+
+            Optional test:
+
+            curl http://localhost:11434/api/tags
+
+            ---
+
+            ## Running the Generator
+
+            ### Basic Run (uses defaults)
+
+            cd /d C:\creator
+            powershell -ExecutionPolicy Bypass -File .\make-video.ps1 -Model "qwen2.5:7b-instruct"
+
+            ---
+
+            ### Run with GPU monitoring enabled
+
+            cd /d C:\creator
+            powershell -ExecutionPolicy Bypass -File .\make-video.ps1 ^
+              -Model "qwen2.5:7b-instruct" ^
+              -ShowGPU ^
+              -ForceGPU
+
+            ---
+
+            ### Run with custom background and voice
+
+            cd /d C:\creator
+            powershell -ExecutionPolicy Bypass -File .\make-video.ps1 ^
+              -Model "qwen2.5:7b-instruct" ^
+              -Background "C:\creator\in\background.mp4" ^
+              -Voice "C:\creator\bin\piper\voice.onnx"
+
+            ---
+
+            ### Run with a custom story theme
+
+            cd /d C:\creator
+            powershell -ExecutionPolicy Bypass -File .\make-video.ps1 ^
+              -Model "qwen2.5:7b-instruct" ^
+              -Prompt "A haunted village where nobody can sleep"
+
+            ---
+
+            ## Output
+
+            Generated files are saved to:
+
+            C:\creator\out\videos
+
+            Each run produces:
+            - final-XXX.mp4 (ready to upload)
+            - Intermediate files in temp\ for debugging
+
+            ---
+
+            ## Notes
+
+            - The script automatically:
+              - Generates a horror story via Ollama
+              - Converts text to speech via Piper
+              - Generates subtitles
+              - Renders a 1080x1920 vertical video
+            - If JSON output from the model is malformed, the script falls back safely.
+            - NVENC is used automatically if supported by your GPU.
+            - All processing is fully local (no cloud APIs).
+
+            ---
+
+            ## Troubleshooting
+
+            ### Script blocked by execution policy
+
+            Run PowerShell as shown with:
+
+            -ExecutionPolicy Bypass
+
+            ### Ollama not responding
+
+            Check:
+
+            curl http://localhost:11434/api/tags
+
+            If it fails, restart:
+
+            ollama serve
+
+            ### Piper fails
+
+            Verify:
+            - .onnx model path is correct
+            - .json config exists next to the model
+
+            ---
+
+            ## License
+
+            Use freely. Modify as needed.
